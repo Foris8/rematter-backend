@@ -1,18 +1,11 @@
-from fuzzywuzzy import process
-import easyocr
-import re
-import spacy
-from textblob import TextBlob
-from spacy.tokens import Span
-
-# Load the spaCy model
-nlp = spacy.load("en_core_web_sm")
-
 from easyocr import Reader
+from transformers import pipeline
+
+
 
 reader = Reader(lang_list=['en'])
 result = reader.readtext(
-    image='app/2.jpeg',
+    image='app/annotated_image_with_labels.jpg',
     detail=0,
     paragraph=False,
     allowlist="ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789/-,'? \" \' ",
@@ -28,34 +21,38 @@ result = reader.readtext(
 
 )
 
-result = ' '.join(result)
-doc = nlp(result)
+print(result)
 
-extracted_info = {
-    "Names": [],
-    "Dates": [],
-    "ID": None,
-    "Address": None
-}
 
-for ent in doc.ents:
-    if ent.label_ in ["PERSON"]:
-        extracted_info["Names"].append(ent.text)
-    elif ent.label_ in ["DATE"]:
-        extracted_info["Dates"].append(ent.text)
+# Join the OCR results into a single text block
+ocr_text = ",".join(result)
+print("OCR Text:", ocr_text)
 
-id_match = re.search(r'\b\d{3} \d{3} \d{3}\b', result)
-if id_match:
-    extracted_info["ID"] = id_match.group()
+questions = [
+    "What is the user's full name as displayed on the driver's license?",
+    "What is the complete address listed on the driver's license?",
+    "What is the date of birth?",
+    "What is the issuance date of the driver's license?",
+    "What is the expiration date of the driver's license?",
+    "What is the license number?",
+    "what is the sex?"
+    # Add more questions as needed
+]
 
-# Starting point for the address, based on the known start
-address_start = result.find("204 W")
-# End point, adjust based on your data
-address_end = result.find("NY 10025") + len("NY 10025")
-if address_start != -1 and address_end != -1:
-    extracted_info["Address"] = result[address_start:address_end]
+# Load the question answering pipeline with BERT
+qa_pipeline = pipeline(
+    "question-answering", model="bert-large-uncased-whole-word-masking-finetuned-squad")
 
-# Print extracted information
-print("Extracted Information:")
-for key, value in extracted_info.items():
-    print(f"{key}: {value}")
+details = {}
+
+for question in questions:
+    input = {
+        'question': question,
+        'context': ocr_text
+    }
+    answer = qa_pipeline(input)
+    details[question] = answer['answer']
+
+# Print extracted details
+for detail, answer in details.items():
+    print(f"{detail}: {answer}")
