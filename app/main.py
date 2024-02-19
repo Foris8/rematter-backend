@@ -176,21 +176,21 @@ def upload_file(file: UploadFile = File(...)):
 
     base64_image = encode_image_to_base64(temp_file_path)
     analysis_result = process_image_with_openai(base64_image)
-    return analysis_result
-    # if "choices" in analysis_result and analysis_result["choices"]:
-    #     content_str = analysis_result["choices"][0]["message"]["content"]
+    
+    if "choices" in analysis_result and analysis_result["choices"]:
+        content_str = analysis_result["choices"][0]["message"]["content"]
 
-    #     try:
-    #         # Parse the JSON string into a Python dictionary
-    #         content_dict = json.loads(content_str)
+        try:
+            # Parse the JSON string into a Python dictionary
+            content_dict = json.loads(content_str)
 
-    #         # Now you can use content_dict as a normal Python dictionary
-    #         # For example, to send it back as a JSON response:
-    #         return JSONResponse(content=content_dict)
+            # Now you can use content_dict as a normal Python dictionary
+            # For example, to send it back as a JSON response:
+            return JSONResponse(content=content_dict)
 
-    #     except json.JSONDecodeError as e:
-    #         # Handle JSON parsing error (e.g., logging, return an error response)
-    #         return HTTPException(status_code=400, detail=f"Failed to decode JSON content: {str(e)}")
-    # else:
-    #     # Handle the case where the expected data is not in the response
-    #     return HTTPException(status_code=400, detail="Invalid response from the analysis API")
+        except json.JSONDecodeError as e:
+            # Handle JSON parsing error (e.g., logging, return an error response)
+            return HTTPException(status_code=400, detail=f"Failed to decode JSON content: {str(e)}")
+    else:
+        # Handle the case where the expected data is not in the response
+        return HTTPException(status_code=400, detail="Invalid response from the analysis API")
