@@ -131,7 +131,7 @@ def process_image_with_openai(base64_image):
                 ]
             }
         ],
-        "max_tokens": 300
+        "max_tokens": 2000
     }
 
     response = requests.post(
@@ -176,7 +176,7 @@ def upload_file(file: UploadFile = File(...)):
 
     base64_image = encode_image_to_base64(temp_file_path)
     analysis_result = process_image_with_openai(base64_image)
-    
+    print(analysis_result)
     if "choices" in analysis_result and analysis_result["choices"]:
         content_str = analysis_result["choices"][0]["message"]["content"]
 
